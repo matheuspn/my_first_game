@@ -1,3 +1,4 @@
+# versão sem layout e sons, porém com classes/sprites.
 import pygame
 import random 
 from pygame import mixer
