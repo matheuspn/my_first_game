@@ -1,10 +1,9 @@
-# versão sem layout e sons, porém com classes/sprites.
 import pygame
 import random 
 from pygame import mixer
 
-width = 800
-height = 400
+width = 1200
+height = 400 
 FPS = 60
 
 #cores
@@ -14,11 +13,48 @@ red = (255, 0, 0)
 green = (0, 255, 0)
 blue = (0, 0, 255)
 
+
+#iniciando pygame e criando a janela do jogo
+pygame.init()
+pygame.mixer.init()
+screen = pygame.display.set_mode((width, height))
+background_image = pygame.image.load('data/background.jpg').convert_alpha()
+background = pygame.transform.scale(background_image, (width, height))
+background_rect = background.get_rect()
+pygame.display.set_caption('Avião!')
+icon_img = pygame.image.load('data/airplane.png')
+pygame.display.set_icon(icon_img)
+clock = pygame.time.Clock()
+
+# imagens do jogo
+player_img = pygame.image.load('data/warplane.png').convert_alpha()
+enemy_img = pygame.image.load('data/enemy_32.png').convert_alpha()
+bullet_img = pygame.image.load('data/laser.png').convert_alpha()
+life_img = pygame.image.load('data/vida.png').convert_alpha()
+
+# Pontuação
+score = 0
+score_x_y = (10 ,10)
+
+# Vidas
+lifes = 5
+life_x_y = (10, height - 25)
+
+# Fonte
+font = pygame.font.Font('data/techno_hideo.ttf', 25)
+
+def draw_text(text, color, x_y):
+    text_screen = font.render(text, True, color)
+    screen.blit(text_screen, x_y)
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('data/warplane.png')
+        self.image = player_img
         self.rect = self.image.get_rect()
+        self.radius = 22
+        # pygame.draw.circle(self.image, red, self.rect.center, self.radius)        
         self.rect.bottom = height / 2
         self.rect.left = 10
         self.speedx = 0
@@ -70,32 +106,37 @@ class Player(pygame.sprite.Sprite):
             self.rect.bottom = height
 
     def shoot(self):
-        bullet = Bullet(self.rect.x + self.rect.width, self.rect.y + (self.rect.height/2) + 13)
+        bullet = Bullet(self.rect.x + self.rect.width, self.rect.y + (self.rect.height/2) + 5)
+        mixer.music.load('data/laser.wav')
+        mixer.music.set_volume(0.2)
+        mixer.music.play()
         all_sprites.add(bullet)
         bullets.add(bullet)
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('data/plane32_l.png')
+        self.image = enemy_img
         self.rect = self.image.get_rect()
-        self.rect.x = random.randrange(850, 1000)
+        self.radius = 13 
+        # pygame.draw.circle(self.image, red, self.rect.center, self.radius) 
+        self.rect.x = random.randrange(width + 10, width + 100)
         self.rect.y = random.randrange(height - self.rect.height)
         self.speedy = 0
-        self.speedx = random.randrange(-6, -2)
+        self.speedx = random.randrange(-8, -3)
 
     def update(self):
         self.rect.x += self.speedx
         if self.rect.right < 0  :
-            self.rect.x = random.randrange(850, 1000)
+            self.rect.x = random.randrange(width + 10, width + 100)
             self.rect.y = random.randrange(height - self.rect.height)
             self.speedy = 0
-            self.speedx = random.randrange(-6, -2)
+            self.speedx = random.randrange(-8, -3)
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('data/bullet.png').convert_alpha()
+        self.image = bullet_img
         self.rect = self.image.get_rect()
         self.rect.bottom = y
         self.rect.centerx = x
@@ -107,17 +148,6 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.left > width:
             self.kill()
 
-
-#iniciando pygame e criando a janela do jogo
-pygame.init()
-pygame.mixer.init()
-screen = pygame.display.set_mode((width, height))
-background = pygame.image.load('data/background1.jpg')
-background_rect = background.get_rect()
-pygame.display.set_caption('Avião!')
-icon_img = pygame.image.load('data/airplane.png')
-pygame.display.set_icon(icon_img)
-clock = pygame.time.Clock()
 
 #Sprites
 all_sprites = pygame.sprite.Group()
@@ -154,23 +184,33 @@ while running :
 
     #checando colisão de bullets com os enemys
     hits = pygame.sprite.groupcollide(enemys, bullets, True, True)
-
+    
     for hit in hits:
+        score += 1
         enemy = Enemy()
         all_sprites.add(enemy)
         enemys.add(enemy)
 
 
     #checando colisão de player com os enemys
-    hits = pygame.sprite.spritecollide(player, enemys, False)
+    hits = pygame.sprite.spritecollide(player, enemys, True, pygame.sprite.collide_circle)
+    
     if hits:
-        running = False
+        lifes -= 1
+        if lifes == 0 :
+            running = False
 
 
     #desenhar / renderizar
     screen.fill(black)
     screen.blit(background, background_rect)
     all_sprites.draw(screen) 
+
+    draw_text(f'Pontos : {score}', white, score_x_y)
+    draw_text(f'Vidas : ', white, life_x_y)
+    
+    for i in range(lifes) :
+        screen.blit(life_img, (110 + (i * 40), height - 32))
 
     pygame.display.flip()
 
