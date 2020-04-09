@@ -10,6 +10,7 @@ O jogador pode se mover para todas as direções, se algum inimigo passar por el
 # Arquivos
 
 O arquivo plane.py, é a primeira versão do jogo.
+
 O arquivo plane_v2.py, se trata de uma melhoria na primeira versão utilizando os sprites e novas imagens.
 
 O arquivo data é onde está contindo as imagens e os sons utilizados.
